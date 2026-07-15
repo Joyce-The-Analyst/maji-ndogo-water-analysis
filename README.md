@@ -4,7 +4,7 @@
 This project investigates access to clean water, data quality issues, staff performance, corruption patterns, and infrastructure improvement planning for Maji Ndogo, using SQL.
 
 ## Tools Used
-MySQL Workbench, Jupyter Notebook
+MySQL Workbench, Jupyter Notebook, Excel
 
 ## Project Parts
 
@@ -13,6 +13,8 @@ Initial exploration of the database, identifying data quality issues (e.g., well
 
 **02 - Clustering Analysis**
 Cleaning employee data (emails, phone numbers), identifying top-performing field staff, analyzing water sources by location and type, and building a queue-time pivot table by day and hour.
+
+![Queue times by day and hour](queue-times-chart.png)
 
 **03 - Corruption Investigation**
 Comparing independent auditor scores against original survey data to detect discrepancies, identifying employees with above-average error rates, and cross-referencing citizen statements for signs of bribery.
