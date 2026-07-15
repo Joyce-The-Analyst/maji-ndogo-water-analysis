@@ -1,3 +1,4 @@
+-- Check for duplicate record_id entries in water_quality
 SELECT
     record_id,
     COUNT(record_id)
@@ -7,8 +8,9 @@ GROUP BY
     record_id
 HAVING
     COUNT(record_id) > 1;
-    
-    SELECT
+
+-- Check for duplicate record_id entries in visits
+SELECT
     record_id,
     COUNT(record_id)
 FROM
@@ -17,8 +19,9 @@ GROUP BY
     record_id
 HAVING
     COUNT(record_id) > 1;
-    
-  DROP TABLE IF EXISTS `auditor_report`;
+
+-- Create the auditor_report table to hold the independent audit data,
+DROP TABLE IF EXISTS `auditor_report`;
 
 CREATE TABLE `auditor_report` (
     `location_id` VARCHAR(32),
@@ -26,18 +29,17 @@ CREATE TABLE `auditor_report` (
     `true_water_source_score` int DEFAULT NULL,
     `statements` VARCHAR(255)
 ); 
-   
-   
-   
-   SELECT
+
+-- Preview the auditor's scores before joining to our survey data
+SELECT
     location_id,
     true_water_source_score
 FROM
     auditor_report;
-    
-  
-  --
-  SELECT
+
+-- This joins auditor_report to visits, linking each audit to the matching record_id
+-- from our own survey data via location_id
+SELECT
     auditor_report.location_id AS audit_location,
     auditor_report.true_water_source_score,
     visits.location_id AS visit_location,
@@ -48,8 +50,8 @@ JOIN
     visits
 ON
     auditor_report.location_id = visits.location_id;
-    
-    -- This query joins auditor_report to visits (to get record_id),
+
+-- This query joins auditor_report to visits (to get record_id),
 -- then joins water_quality (via record_id) to bring in the surveyor's subjective_quality_score
 SELECT
     auditor_report.location_id AS audit_location,
@@ -65,9 +67,8 @@ JOIN
 JOIN
     water_quality
     ON visits.record_id = water_quality.record_id;
-    
-    
-    -- This query compares the auditor's re-recorded score against the original surveyor's score
+
+-- This query compares the auditor's re-recorded score against the original surveyor's score
 -- for each location, linking auditor_report -> visits -> water_quality via location_id and record_id
 SELECT
     auditor_report.location_id,
@@ -82,9 +83,8 @@ JOIN
 JOIN
     water_quality
     ON visits.record_id = water_quality.record_id;
-    
-    
-    -- This query checks whether the auditor's score and the surveyor's score agree for each record
+
+-- This query checks whether the auditor's score and the surveyor's score agree for each record
 SELECT
     auditor_report.location_id,
     visits.record_id,
@@ -100,9 +100,8 @@ JOIN
     ON visits.record_id = water_quality.record_id
 WHERE
     auditor_report.true_water_source_score = water_quality.subjective_quality_score;
-    
-    
-    -- This counts how many records have matching auditor and surveyor scores
+
+-- This counts how many records have matching auditor and surveyor scores
 SELECT
     COUNT(*)
 FROM
@@ -115,9 +114,8 @@ JOIN
     ON visits.record_id = water_quality.record_id
 WHERE
     auditor_report.true_water_source_score = water_quality.subjective_quality_score;
-    
-    
-    -- This counts matching auditor/surveyor scores, restricted to the first visit only (visit_count = 1)
+
+-- This counts matching auditor/surveyor scores, restricted to the first visit only (visit_count = 1)
 -- to avoid counting the same location multiple times
 SELECT
     COUNT(*)
@@ -132,10 +130,9 @@ JOIN
 WHERE
     auditor_report.true_water_source_score = water_quality.subjective_quality_score
     AND visits.visit_count = 1;
-    
-    
-   -- This pulls the full details of records where the auditor's score
--- does NOT match the surveyor's score (i.e. the incorrect records)
+
+-- This pulls the full details of records where the auditor's score
+-- does NOT match the surveyor's score, the incorrect records
 SELECT
     auditor_report.location_id,
     visits.record_id,
@@ -152,9 +149,8 @@ JOIN
 WHERE
     auditor_report.true_water_source_score != water_quality.subjective_quality_score
     AND visits.visit_count = 1;
-    
-    
-    -- This checks whether the type_of_water_source recorded by the auditor
+
+-- This checks whether the type_of_water_source recorded by the auditor
 -- matches the type_of_water_source recorded by our surveyors, for the 102 records
 SELECT
     auditor_report.location_id,
@@ -177,9 +173,8 @@ JOIN
 WHERE
     auditor_report.true_water_source_score != water_quality.subjective_quality_score
     AND visits.visit_count = 1;
-    
-    
-    -- This pulls the 102 records where the auditor's score does NOT match the surveyor's score,
+
+-- This pulls the 102 records where the auditor's score does NOT match the surveyor's score,
 -- and links each record to the employee who recorded it, using their name instead of raw ID.
 SELECT
     auditor_report.location_id,
@@ -201,9 +196,8 @@ JOIN
 WHERE
     auditor_report.true_water_source_score != water_quality.subjective_quality_score
     AND visits.visit_count = 1;
-    
-    
-    -- This view joins the auditor report to the database, returning all records
+
+-- This view joins the auditor report to the database, returning all records
 -- where the auditor's score and the surveyor's (employee's) score didn't match,
 -- along with the employee's name and any citizen statements collected by the auditor.
 CREATE VIEW Incorrect_records AS (
@@ -230,8 +224,8 @@ CREATE VIEW Incorrect_records AS (
         AND auditor_report.true_water_source_score != water_quality.subjective_quality_score
 );
 
-
-SELECT * FROM Incorrect_records;
+SELECT * 
+FROM Incorrect_records;
 
 -- This counts how many "incorrect" records (mismatched scores) each employee has,
 SELECT
@@ -243,9 +237,8 @@ GROUP BY
     employee_name
 ORDER BY
     number_of_mistakes DESC;
-    
-    
-    -- This calculates the average number of mistakes per employee,
+
+-- This calculates the average number of mistakes per employee,
 -- using error_count (number of mismatched records per employee) as a baseline for comparison
 WITH error_count AS (
     SELECT
@@ -260,7 +253,6 @@ SELECT
     AVG(number_of_mistakes)
 FROM
     error_count;
-
 
 -- This CTE calculates the number of mistakes each employee made
 WITH error_count AS (
@@ -280,9 +272,8 @@ FROM
     error_count
 WHERE
     number_of_mistakes > (SELECT AVG(number_of_mistakes) FROM error_count);
-    
-    
-    -- This CTE calculates the number of mistakes each employee made
+
+-- This CTE calculates the number of mistakes each employee made
 WITH error_count AS (
     SELECT
         employee_name,
@@ -311,9 +302,8 @@ FROM
     Incorrect_records
 WHERE
     employee_name IN (SELECT employee_name FROM suspect_list);
-    
-    
-    -- This filters the suspect employees' records to only those where the statement mentions "cash"
+
+-- This filters the suspect employees' records to only those where the statement mentions "cash"
 WITH error_count AS (
     SELECT
         employee_name,
@@ -341,10 +331,9 @@ FROM
 WHERE
     employee_name IN (SELECT employee_name FROM suspect_list)
     AND statements LIKE '%cash%';
-    
-    
-    -- This checks whether ANY employees outside our suspect list also have "cash" mentioned
--- in their statements. If this returns zero rows, it means only our 4 suspects
+
+-- This checks whether ANY employees outside our suspect list also have "cash" mentioned
+-- in their statements. If this returns zero rows, it means only our 4 suspects had cash-related statements, strengthening the case against them.
 WITH error_count AS (
     SELECT
         employee_name,
